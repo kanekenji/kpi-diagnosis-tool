@@ -1,0 +1,115 @@
+# KPI 診断レポート
+
+- **対象ファイル:** {{ filename }}
+- **実行日時:** {{ run_at }}
+- **行数:** {{ row_count }} 行 / **列数:** {{ col_count }} 列
+- **総合判定:** {{ overall }}
+
+---
+
+## データ品質チェック結果
+
+### 欠損チェック
+
+{% if not quality.missing.detail %}
+問題なし
+{% else %}
+| カラム | 欠損数 | 欠損率 | 行番号 |
+|--------|--------|--------|--------|
+{% for d in quality.missing.detail %}
+| {{ d.column }} | {{ d.count }} | {{ d.rate }}% | {{ d.rows | join(", ") }} |
+{% endfor %}
+{% endif %}
+
+### 型整合性チェック
+
+{% if not quality.type_mismatch.detail %}
+問題なし
+{% else %}
+| カラム | 不整合数 | 行番号 | 値 |
+|--------|---------|--------|-----|
+{% for d in quality.type_mismatch.detail %}
+| {{ d.column }} | {{ d.count }} | {{ d.rows | join(", ") }} | {{ d.bad_values | join(", ") }} |
+{% endfor %}
+{% endif %}
+
+### month フォーマットチェック
+
+{% if not quality.month_format.detail %}
+問題なし
+{% else %}
+{% for d in quality.month_format.detail %}
+フォーマット不正 {{ d.count }} 件 — 行番号: {{ d.rows | join(", ") }} / 値: {{ d.bad_values | join(", ") }}
+{% endfor %}
+{% endif %}
+
+### updated_at フォーマットチェック
+
+{% if not quality.updated_at_format.detail %}
+問題なし
+{% else %}
+{% for d in quality.updated_at_format.detail %}
+フォーマット不正 {{ d.count }} 件 — 行番号: {{ d.rows | join(", ") }} / 値: {{ d.bad_values | join(", ") }}
+{% endfor %}
+{% endif %}
+
+### 完全重複チェック
+
+{% if not quality.full_duplicates.detail %}
+問題なし
+{% else %}
+{% for d in quality.full_duplicates.detail %}
+完全重複 {{ d.count }} 件 — 行番号: {{ d.rows | join(", ") }}
+{% endfor %}
+{% endif %}
+
+### キー重複チェック
+
+{% if not quality.key_duplicates.detail %}
+問題なし
+{% else %}
+| 行番号 | キー値 (month / department / kpi_name) |
+|--------|---------------------------------------|
+{% for d in quality.key_duplicates.detail %}
+| {{ d.row }} | {{ d.key | join(" / ") }} |
+{% endfor %}
+{% endif %}
+
+---
+
+## 前月比急変チェック結果（閾値: ±{{ threshold }}%）
+
+{% if not change.sudden_changes.detail %}
+急変なし ✅
+{% else %}
+急変検出: {{ change.sudden_changes.count }} 件
+
+| department | kpi_name | month | current | previous | change_rate |
+|------------|----------|-------|---------|----------|-------------|
+{% for d in change.sudden_changes.detail %}
+| {{ d.department }} | {{ d.kpi_name }} | {{ d.month }} | {{ d.current_value | fmt_num }} | {{ d.previous_value | fmt_num }} | {{ d.change_rate | fmt_pct }} |
+{% endfor %}
+{% endif %}
+{% if change.skipped.detail %}
+
+**スキップされた行（計算対象外）:**
+
+| department | kpi_name | month | 理由 |
+|------------|----------|-------|------|
+{% for d in change.skipped.detail %}
+| {{ d.department }} | {{ d.kpi_name }} | {{ d.month }} | {{ d.skip_reason }} |
+{% endfor %}
+{% endif %}
+
+---
+
+## Power BI 改善コメント
+
+{% if not comments %}
+> ✅ 検出された問題はありません。データ品質は良好です。
+{% else %}
+{% for comment in comments %}
+> 💡 {{ comment }}
+
+{% endfor %}
+{% endif %}
