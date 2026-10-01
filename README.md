@@ -65,10 +65,20 @@ Python 3.11 が入っていない場合は [python.org](https://www.python.org/d
 brew install python@3.11
 ```
 
+Python 3.12 でも動作を確認しています（3.11 以上であれば可）。以降の `python3.11` は、お使いの 3.11 以上のコマンドに読み替えてください。
+
 ### 依存ライブラリのインストール
 
 ```bash
 python3.11 -m pip install -r requirements.txt
+```
+
+システムの Python を汚したくない場合は、仮想環境を使う方法もあります。
+
+```bash
+python3.11 -m venv .venv
+.venv/bin/pip install -r requirements.txt
+.venv/bin/python scripts/run_diagnosis.py data/sample_kpi.csv
 ```
 
 `requirements.txt` には以下が含まれています：
